@@ -235,11 +235,12 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * inconsistent stage the unique id is used multiple times.
 	 * 
 	 * @param imageFile The image whose hash will be added to the matcher
+	 * @param chatId Id of Telegram chat
 	 * @throws IOException  if an error exists reading the file
 	 * @throws SQLException if an SQL error occurs
 	 */
-	public void addImage(File imageFile) throws IOException, SQLException {
-		addImage(imageFile.getAbsolutePath(), imageFile);
+	public void addImage(File imageFile, long chatId) throws IOException, SQLException {
+		addImage(imageFile.getAbsolutePath(), imageFile, chatId);
 	}
 
 	/**
@@ -258,11 +259,12 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * 
 	 * @param uniqueId  a unique identifier returned if querying for the image
 	 * @param imageFile The image whose hash will be added to the matcher
+	 * @param chatId Id of Telegram chat
 	 * @throws IOException  if an error exists reading the file
 	 * @throws SQLException if an SQL error occurs
 	 * @since 2.0.2
 	 */
-	public void addImage(String uniqueId, File imageFile) throws IOException, SQLException {
+	public void addImage(String uniqueId, File imageFile, long chatId) throws IOException, SQLException {
 
 		// Only load if necessary.
 		BufferedImage img = null;
@@ -273,7 +275,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 				if (img == null) {
 					img = ImageIO.read(imageFile);
 				}
-				addImage(algo, uniqueId, img);
+				addImage(algo, uniqueId, img, chatId);
 			}
 		}
 	}
@@ -292,14 +294,15 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * This is useful for the situation in which you want to add an additional
 	 * hashing algorithm to the database image matcher, but will leave the db in
 	 * inconsistent stage the unique id is used multiple times.
-	 * 
+	 *
+	 * @param chatId Id of Telegram chat
 	 * @param images The images whose hash will be added to the matcher
 	 * @throws IOException  if an error exists reading the file
 	 * @throws SQLException if an SQL error occurs
 	 */
-	public void addImages(File... images) throws IOException, SQLException {
+	public void addImages(long chatId, File... images) throws IOException, SQLException {
 		for (File img : images) {
-			addImage(img);
+			addImage(img, chatId);
 		}
 	}
 
@@ -319,20 +322,21 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * 
 	 * @param uniqueIds a unique identifier returned if querying for the image
 	 * @param images    The images whose hash will be added to the matcher
+	 * @param chatId Id of Telegram chat
 	 * @throws IOException              if an error exists reading the file
 	 * @throws SQLException             if an SQL error occurs
 	 * @throws IllegalArgumentException if uniqueIds and images don't have the same
 	 *                                  length
 	 * @since 2.0.2
 	 */
-	public void addImages(String[] uniqueIds, File[] images) throws IOException, SQLException {
+	public void addImages(String[] uniqueIds, File[] images, long chatId) throws IOException, SQLException {
 
 		if (uniqueIds.length != images.length) {
 			throw new IllegalArgumentException("You need to supply the same number of id's and images");
 		}
 
 		for (int i = 0; i < uniqueIds.length; i++) {
-			addImage(uniqueIds[i], images[i]);
+			addImage(uniqueIds[i], images[i], chatId);
 		}
 	}
 
@@ -352,13 +356,14 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * 
 	 * @param uniqueId a unique identifier returned if querying for the image
 	 * @param image    The image to hash
+	 * @param chatId Id of Telegram chat
 	 * @throws SQLException if an SQL error occurs
 	 */
-	public void addImage(String uniqueId, BufferedImage image) throws SQLException {
+	public void addImage(String uniqueId, BufferedImage image, long chatId) throws SQLException {
 		for (Entry<HashingAlgorithm, AlgoSettings> entry : steps.entrySet()) {
 			HashingAlgorithm algo = entry.getKey();
 			if (!doesEntryExist(uniqueId, algo)) {
-				addImage(algo, uniqueId, image);
+				addImage(algo, uniqueId, image, chatId);
 			}
 		}
 	}
@@ -379,13 +384,14 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * 
 	 * @param uniqueIds a unique identifier returned if querying for the image
 	 * @param images    The images to hash
+	 * @param chatId Id of Telegram chat
 	 * @throws SQLException             if an SQL error occurs
 	 * @throws IllegalArgumentException if uniqueIds and images don't have the same
 	 *                                  length
-	 * @see #addImage(String, BufferedImage)
+	 * @see #addImage(String, BufferedImage, long)
 	 * @since 2.0.2
 	 */
-	public void addImages(String[] uniqueIds, BufferedImage[] images) throws SQLException {
+	public void addImages(String[] uniqueIds, BufferedImage[] images, long chatId) throws SQLException {
 		if (uniqueIds.length != images.length) {
 			throw new IllegalArgumentException("You need to supply the same number of id's and images");
 		}
@@ -394,7 +400,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 			for (Entry<HashingAlgorithm, AlgoSettings> entry : steps.entrySet()) {
 				HashingAlgorithm algo = entry.getKey();
 				if (!doesEntryExist(uniqueIds[i], algo)) {
-					addImage(algo, uniqueIds[i], images[i]);
+					addImage(algo, uniqueIds[i], images[i], chatId);
 				}
 			}
 		}
@@ -503,11 +509,12 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 *         The matched images are unique ids/file paths sorted by the
 	 *         <a href="https://en.wikipedia.org/wiki/Hamming_distance">hamming
 	 *         distance</a> of the last applied algorithms
-	 * 
+	 *
+	 * @param chatId Id of Telegram chat
 	 * @throws SQLException if an SQL error occurs
 	 * @since 2.0.2
 	 */
-	public Map<String, PriorityQueue<Result<String>>> getAllMatchingImages() throws SQLException {
+	public Map<String, PriorityQueue<Result<String>>> getAllMatchingImages(long chatId) throws SQLException {
 
 		Map<String, PriorityQueue<Result<String>>> returnVal = new HashMap<>();
 
@@ -554,7 +561,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 					threshold = (int) settings.getThreshold();
 				}
 				PriorityQueue<Result<String>> temp = new PriorityQueue<Result<String>>(
-						getSimilarImages(targetHash, threshold, algo));
+						getSimilarImages(targetHash, threshold, algo, chatId));
 
 				if (returnValues == null) {
 					returnValues = temp;
@@ -578,10 +585,11 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * <p>
 	 * This method effectively circumvents the algorithm settings and should be used
 	 * sparsely only when you know what you are doing. Usually you may want to use
-	 * {@link #getMatchingImages(BufferedImage) instead.}
+	 * {@link #getMatchingImages(BufferedImage, long) instead.}
 	 * 
 	 * @param image              The image to search matches for
 	 * @param normalizedDistance the distance used for the algorithms
+	 * @param chatId Id of Telegram chat
 	 * @return Return all unique ids/file paths sorted by the
 	 *         <a href="https://en.wikipedia.org/wiki/Hamming_distance">hamming
 	 *         distance</a> of the last applied algorithms
@@ -589,7 +597,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * @since 2.0.2
 	 */
 	public PriorityQueue<Result<String>> getMatchingImagesWithinDistance(BufferedImage image,
-			double[] normalizedDistance) throws SQLException {
+			double[] normalizedDistance, long chatId) throws SQLException {
 
 		if (steps.isEmpty())
 			throw new IllegalStateException(
@@ -607,7 +615,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 			int threshold = (int) Math.round(normalizedDistance[i] * targetHash.getBitResolution());
 
 			PriorityQueue<Result<String>> temp = new PriorityQueue<Result<String>>(
-					getSimilarImages(targetHash, threshold, algo));
+					getSimilarImages(targetHash, threshold, algo, chatId));
 
 			if (returnValues == null) {
 				returnValues = temp;
@@ -625,14 +633,15 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * with a distance of 0
 	 * 
 	 * @param imageFile The image other images will be matched against
+	 * @param chatId Id of Telegram chat
 	 * @return Return all unique ids/file paths sorted by the
 	 *         <a href="https://en.wikipedia.org/wiki/Hamming_distance">hamming
 	 *         distance</a> of the last applied algorithms
 	 * @throws SQLException if an SQL error occurs
 	 * @throws IOException  if an error occurs when reading the file
 	 */
-	public PriorityQueue<Result<String>> getMatchingImages(File imageFile) throws SQLException, IOException {
-		return getMatchingImages(ImageIO.read(imageFile));
+	public PriorityQueue<Result<String>> getMatchingImages(File imageFile, long chatId) throws SQLException, IOException {
+		return getMatchingImages(ImageIO.read(imageFile), chatId);
 	}
 
 	/**
@@ -641,12 +650,13 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * with a distance of 0
 	 * 
 	 * @param image The image other images will be matched against
+	 * @param chatId Id of Telegram chat
 	 * @return Return all unique ids/file paths sorted by the
 	 *         <a href="https://en.wikipedia.org/wiki/Hamming_distance">hamming
 	 *         distance</a> of the last applied algorithms
 	 * @throws SQLException if an SQL error occurs
 	 */
-	public PriorityQueue<Result<String>> getMatchingImages(BufferedImage image) throws SQLException {
+	public PriorityQueue<Result<String>> getMatchingImages(BufferedImage image, long chatId) throws SQLException {
 
 		if (steps.isEmpty())
 			throw new IllegalStateException(
@@ -668,7 +678,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 			}
 
 			PriorityQueue<Result<String>> temp = new PriorityQueue<Result<String>>(
-					getSimilarImages(targetHash, threshold, algo));
+					getSimilarImages(targetHash, threshold, algo, chatId));
 
 			if (returnValues == null) {
 				returnValues = temp;
@@ -687,16 +697,17 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 	 * @param targetHash  The hash to check the database against
 	 * @param maxDistance The maximum distance the hashes may have
 	 * @param hasher      the hashing algorithm used to identify the table
+	 * @param chatId Id of Telegram chat
 	 * @return all urls within distance x of the supplied hash
 	 * @throws SQLException if an SQL error occurs
 	 */
-	protected List<Result<String>> getSimilarImages(Hash targetHash, int maxDistance, HashingAlgorithm hasher)
+	protected List<Result<String>> getSimilarImages(Hash targetHash, int maxDistance, HashingAlgorithm hasher, long chatId)
 			throws SQLException {
 
 		String tableName = resolveTableName(hasher);
 		List<Result<String>> urls = new ArrayList<>();
 		try (Statement stmt = conn.createStatement()) {
-			ResultSet rs = stmt.executeQuery("SELECT url,hash FROM " + tableName);
+			ResultSet rs = stmt.executeQuery("SELECT url,hash FROM " + tableName + " WHERE chat_id = " + chatId);
 			while (rs.next()) {
 				// Url
 				byte[] bytes = rs.getBytes(2);
@@ -712,17 +723,18 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 		return urls;
 	}
 
-	protected void addImage(HashingAlgorithm hashAlgo, String url, BufferedImage image) throws SQLException {
+	protected void addImage(HashingAlgorithm hashAlgo, String url, BufferedImage image, long chatId) throws SQLException {
 		String tableName = resolveTableName(hashAlgo);
 
 		if (!doesTableExist(tableName)) {
 			createHashTable(hashAlgo);
 		}
 		try (PreparedStatement insertHash = conn
-				.prepareStatement("MERGE INTO " + tableName + " (url,hash) VALUES(?,?)")) {
+				.prepareStatement("MERGE INTO " + tableName + " (url,hash,chat_id) VALUES(?,?,?)")) {
 			Hash hash = hashAlgo.hash(image);
 			insertHash.setString(1, url);
 			insertHash.setBytes(2, hash.toByteArray());
+			insertHash.setLong(3, chatId);
 			insertHash.execute();
 		}
 	}
@@ -748,7 +760,7 @@ public class DatabaseImageMatcher extends TypedImageMatcher implements Serializa
 			Hash sampleHash = hasher.hash(bi);
 			int bytes = (int) Math.ceil(sampleHash.getBitResolution() / 8d);
 
-			stmt.execute("CREATE TABLE " + tableName + " (url VARCHAR(260) PRIMARY KEY, hash BINARY(" + bytes + "))");
+			stmt.execute("CREATE TABLE " + tableName + " (url VARCHAR(260) PRIMARY KEY, hash BINARY(" + bytes + "), chat_id BIGINT)");
 		}
 	}
 

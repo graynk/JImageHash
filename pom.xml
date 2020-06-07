@@ -182,6 +182,7 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.0.1</version>
 				<configuration>
+					<detectJavaApiLink>false</detectJavaApiLink>
 					<!-- <excludes> <exclude>**/kilianB/examples/**</exclude> </excludes> -->
 					<!-- Only supported once moved to java 9 -->
 					<!-- <additionalOptions>-html5</additionalOptions> -->

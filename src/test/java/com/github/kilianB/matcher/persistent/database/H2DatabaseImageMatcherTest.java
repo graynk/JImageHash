@@ -84,7 +84,7 @@ class H2DatabaseImageMatcherTest {
 			DatabaseImageMatcher effectiveFinal = matcher;
 			BufferedImage dummyImage = new BufferedImage(1, 1, 0x1);
 			assertThrows(IllegalStateException.class, () -> {
-				effectiveFinal.getMatchingImages(dummyImage);
+				effectiveFinal.getMatchingImages(dummyImage, 0);
 			});
 		} finally {
 			try {
@@ -157,21 +157,21 @@ class H2DatabaseImageMatcherTest {
 				
 				matcher.addHashingAlgorithm(new AverageHash(128),.4);
 				
-				matcher.addImage("Ballon", ballon);
-				matcher.addImage("CopyRight", copyright);
-				matcher.addImage("HighQuality", highQuality);
-				matcher.addImage("LowQuality", lowQuality);
-				matcher.addImage("Thumbnail", thumbnail);
+				matcher.addImage("Ballon", ballon, 0);
+				matcher.addImage("CopyRight", copyright, 0);
+				matcher.addImage("HighQuality", highQuality, 0);
+				matcher.addImage("LowQuality", lowQuality, 0);
+				matcher.addImage("Thumbnail", thumbnail, 0);
 
 				// We only expect ballon to be returned
-				PriorityQueue<Result<String>> results = matcher.getMatchingImages(ballon);
+				PriorityQueue<Result<String>> results = matcher.getMatchingImages(ballon, 0);
 				assertAll("Ballon", () -> {
 					assertEquals(1, results.size());
 				}, () -> {
 					assertEquals("Ballon", results.peek().value);
 				});
 
-				final PriorityQueue<Result<String>> results1 = matcher.getMatchingImages(highQuality);
+				final PriorityQueue<Result<String>> results1 = matcher.getMatchingImages(highQuality, 0);
 				assertAll("Matches", () -> {
 					assertEquals(4, results1.size());
 				}, () -> {
@@ -212,7 +212,7 @@ class H2DatabaseImageMatcherTest {
 				}
 			};
 			dbMatcher.addHashingAlgorithm(aHash, 0.4f);
-			dbMatcher.addImage("ballon", ballon);
+			dbMatcher.addImage("ballon", ballon, 0);
 			byte[] rawDbBytes = (byte[]) dbMatcher.getClass().getMethod("getBytesFromTable").invoke(dbMatcher);
 			Hash hReconstructed = dbMatcher.reconstructHashFromDatabase(aHash, rawDbBytes);
 			assertEquals(h, hReconstructed);
@@ -233,12 +233,12 @@ class H2DatabaseImageMatcherTest {
 
 			dbMatcher = new H2DatabaseImageMatcher("TestAllMatching1", "sa", "");
 			dbMatcher.addHashingAlgorithm(new AverageHash(64),.4);
-			dbMatcher.addImage("ballon", ballon);
-			dbMatcher.addImage("highQuality", highQuality);
-			dbMatcher.addImage("lowQuality", lowQuality);
-			dbMatcher.addImage("thumbnail", thumbnail);
+			dbMatcher.addImage("ballon", ballon, 0);
+			dbMatcher.addImage("highQuality", highQuality, 0);
+			dbMatcher.addImage("lowQuality", lowQuality, 0);
+			dbMatcher.addImage("thumbnail", thumbnail, 0);
 
-			Map<String, PriorityQueue<Result<String>>> allMatchingImages = dbMatcher.getAllMatchingImages();
+			Map<String, PriorityQueue<Result<String>>> allMatchingImages = dbMatcher.getAllMatchingImages(0);
 
 			Set<String> images = allMatchingImages.keySet();
 
@@ -320,7 +320,7 @@ class H2DatabaseImageMatcherTest {
 				dbMatcher = new H2DatabaseImageMatcher("testEntryExist0", "sa", "");
 				HashingAlgorithm h0 = new PerceptiveHash(64);
 				dbMatcher.addHashingAlgorithm(h0, 0.5f);
-				dbMatcher.addImage("ballon", ballon);
+				dbMatcher.addImage("ballon", ballon, 0);
 				assertTrue(dbMatcher.doesEntryExist("ballon", h0));
 			} finally {
 				try {
@@ -340,14 +340,14 @@ class H2DatabaseImageMatcherTest {
 				dbMatcher = new H2DatabaseImageMatcher("testEntryExist0", "sa", "");
 				HashingAlgorithm h0 = new PerceptiveHash(64);
 				dbMatcher.addHashingAlgorithm(h0, 0.5f);
-				dbMatcher.addImage("ballon", ballon);
+				dbMatcher.addImage("ballon", ballon, 0);
 				assertTrue(dbMatcher.doesEntryExist("ballon", h0));
 
 				HashingAlgorithm h1 = new AverageHash(64);
 				dbMatcher.addHashingAlgorithm(h1, 0.1f);
 
 				assertFalse(dbMatcher.doesEntryExist("ballon", h1));
-				dbMatcher.addImage("ballon", ballon);
+				dbMatcher.addImage("ballon", ballon, 0);
 				assertTrue(dbMatcher.doesEntryExist("ballon", h1));
 
 			} finally {

@@ -84,13 +84,13 @@ public class DatabaseExample {
 			File copyright = new File("src/test/resources/copyright.jpg");
 			File highQuality = new File("src/test/resources/highQuality.jpg");
 
-			db.addImages(ballon, copyright, highQuality);
+			db.addImages(0, ballon, copyright, highQuality);
 
-			PriorityQueue<Result<String>> results = db.getMatchingImages(copyright);
+			PriorityQueue<Result<String>> results = db.getMatchingImages(copyright, 0);
 			results.forEach(System.out::println);
 
 			// Find all images which are similar to any image in the database
-			System.out.println(db.getAllMatchingImages());
+			System.out.println(db.getAllMatchingImages(0));
 		}
 
 		/*
@@ -123,7 +123,7 @@ public class DatabaseExample {
 			// Be aware that this only works because we are using the exact same hashing
 			// algorithms as
 			// in the earlier function!
-			PriorityQueue<Result<String>> results = db.getMatchingImages(copyright);
+			PriorityQueue<Result<String>> results = db.getMatchingImages(copyright, 0);
 			results.forEach(System.out::println);
 		}
 		
